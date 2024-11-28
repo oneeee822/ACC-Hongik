@@ -1,29 +1,34 @@
-name: Server Status Check
+name: "Release Health Check"
 
 on:
+  # 매 2시간마다 수행
   schedule:
-    - cron: '*/30 * * * *' # 매 30분마다 실행
-  workflow_dispatch:       # 수동 실행 가능
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+
 
 jobs:
-  check-server:
-    runs-on: ubuntu-latest
-
+  healthcheck:
+    # ubuntu 버전 지정
+    runs-on: ubuntu-22.04
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      # 릴리즈 서버 헬스 체크 진행
+      - name: Release API Health Check
+        uses: jtalk/url-health-check-action@v3
+        with:
+          url: ${{ secrets.CHECKURL }}
+          max-attempts: 3 # 시도 횟수
+          retry-delay: 1s # 시도 간격
 
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      # 헬스 체크 결과 슬랙으로 연동
+      - name: action-slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          author_name: Health-Check
+          fields: repo,message,commit,action,eventName,ref,workflow,job,took # 보낼 정보들
+          github_token: ${{ secrets.ACCESS_TOKEN_GIT }}
 
-    - name: Build and Run Java Program
-      run: |
-        mvn compile
-        mvn exec:java -Dexec.mainClass="ServerCheck"
-      env:
-        SERVER_URL: ${{ secrets.CHECKURL }}
-        SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOKS }}
-
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOKS }} # required
+        if: always() # 스크립트 성공/실패 여부에 상관없이 항상 수행되도록 설정
