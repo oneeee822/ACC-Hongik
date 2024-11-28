@@ -1,9 +1,9 @@
-name: Server Status Check 
+name: Server Status Check
 
 on:
   schedule:
-    - cron: '*/30 * * * *' 
-  workflow_dispatch:       
+    - cron: '*/30 * * * *' # 매 30분마다 실행
+  workflow_dispatch:       # 수동 실행 가능
 
 jobs:
   check-server:
@@ -24,5 +24,6 @@ jobs:
         mvn compile
         mvn exec:java -Dexec.mainClass="ServerCheck"
       env:
-        SERVER_URL: ${{ secrets.CHECKURL }} 
-        SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOKS }} 
+        SERVER_URL: ${{ secrets.CHECKURL }}
+        SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOKS }}
+
