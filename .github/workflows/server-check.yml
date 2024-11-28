@@ -1,0 +1,28 @@
+name: Server Status Check 
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' 
+  workflow_dispatch:       
+
+jobs:
+  check-server:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Build and Run Java Program
+      run: |
+        mvn compile
+        mvn exec:java -Dexec.mainClass="ServerCheck"
+      env:
+        SERVER_URL: ${{ secrets.CHECKURL }} 
+        SLACK_WEBHOOK_URL: ${{ secrets.WEBHOOKS }} 
